@@ -1,24 +1,24 @@
 use clap::Parser;
-use reqwest::{self, Error};
+use web_pinger::UrlPinger;
 
 /// A simple URL pinger that gives you response times and status codes
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-struct UrlPinger {
+struct UrlParser {
     /// Comma separated list of URLs to ping
     #[arg(short, long)]
     urls: String
 }
 
 
-fn main() -> Result<(), Error>  {
-    let pinger = UrlPinger::parse();
+fn main() {
+    let parser = UrlParser::parse();
 
-    for url in pinger.urls.split(",") {
-        let body = reqwest::blocking::get(url)?
-            .text()?;
-        println!("body = {:?}", body)
+    let pinger = UrlPinger::new(parser.urls);
+
+    let ping_results = pinger.ping_urls();
+    for res in ping_results.iter() {
+        println!("{:?}", res)
     }
-    Ok(())
-    
+
 }
