@@ -4,7 +4,8 @@ pub struct UrlPinger {
 
 #[derive(Debug)]
 pub struct PingResult {
-   pub status_code: u32
+    pub url: String,
+    pub status_code: u32
 }
 
 impl UrlPinger {
@@ -25,7 +26,7 @@ impl UrlPinger {
                 Ok(_) => 200,
                 Err(_) => 404
             };
-            results.push(PingResult{status_code});
+            results.push(PingResult{url: url.to_string(),  status_code});
         }
         results
 
