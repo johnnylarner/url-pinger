@@ -1,3 +1,5 @@
+use reqwest::{self};
+
 pub struct UrlPinger {
     pub urls: Vec<String>
 }
@@ -5,7 +7,7 @@ pub struct UrlPinger {
 #[derive(Debug)]
 pub struct PingResult {
     pub url: String,
-    pub status_code: u32
+    pub status_code: u16
 }
 
 impl UrlPinger {
@@ -23,7 +25,7 @@ impl UrlPinger {
         for url in self.urls.iter() {
             let response = reqwest::blocking::get(url);
             let status_code = match response {
-                Ok(_) => 200,
+                Ok(response) =>  response.status().as_u16(),
                 Err(_) => 404
             };
             results.push(PingResult{url: url.to_string(),  status_code});
@@ -49,7 +51,7 @@ mod tests {
 
     #[test]
     fn ping_urls_handles_good_and_bad_requests() {
-        let urls = "https://example.com,htx:example.com,https://mywebsiiiiiilsiguhdkfghkusdhgiusrhiguhsiiiite.com".to_string();
+        let urls = "https://example.com,htx:example.com,https://google.com/hype".to_string();
         let pinger = UrlPinger::new(urls);
 
         let results = pinger.ping_urls();
