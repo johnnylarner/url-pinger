@@ -14,7 +14,7 @@ pub struct PingResult {
 
 impl UrlPinger {
     pub fn new(urls: String) -> UrlPinger {
-        let mut url_vec: Vec<String> = vec![];
+        let mut url_vec: Vec<String> = Vec::new();
         for url in urls.split(",") {
             url_vec.push(url.to_string());
         }
@@ -22,18 +22,17 @@ impl UrlPinger {
         UrlPinger { urls: url_vec }
     }
 
-    pub fn ping_urls(self) -> Vec<PingResult> {
-        let mut results: Vec<PingResult> = vec![];
+    pub fn ping_urls(&self) -> Vec<PingResult> {
+        let mut results: Vec<PingResult> = Vec::new();
         for url in self.urls.iter() {
-            let request_start_time = Instant::now();
+            let start = Instant::now();
             let status_code: u16 = self.get_url_status_code(&url);
-            let request_end_time = Instant::now();
+            let end = start.elapsed();
 
-            let request_duration = request_end_time - request_start_time;
             results.push(PingResult {
-                url: url.to_string(),
+                url: url.clone(),
                 status_code,
-                duration_in_nano_seconds: request_duration.as_nanos(),
+                duration_in_nano_seconds: end.as_nanos(),
             });
         }
         results
