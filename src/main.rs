@@ -7,9 +7,8 @@ use web_pinger::UrlPinger;
 struct UrlParser {
     /// Comma separated list of URLs to ping
     #[arg(short, long)]
-    urls: String
+    urls: String,
 }
-
 
 fn main() {
     let parser = UrlParser::parse();
@@ -20,5 +19,4 @@ fn main() {
     for res in ping_results.iter() {
         println!("{:?}", res)
     }
-
 }

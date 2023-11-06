@@ -1,40 +1,52 @@
 use reqwest::{self};
+use std::time::Instant;
 
 pub struct UrlPinger {
-    pub urls: Vec<String>
+    pub urls: Vec<String>,
 }
 
 #[derive(Debug)]
 pub struct PingResult {
     pub url: String,
-    pub status_code: u16
+    pub status_code: u16,
+    pub duration_in_nano_seconds: u128,
 }
 
 impl UrlPinger {
-    pub fn new(urls: String) ->  UrlPinger{
+    pub fn new(urls: String) -> UrlPinger {
         let mut url_vec: Vec<String> = vec![];
         for url in urls.split(",") {
             url_vec.push(url.to_string());
         }
 
-        UrlPinger{urls: url_vec}
+        UrlPinger { urls: url_vec }
     }
 
     pub fn ping_urls(self) -> Vec<PingResult> {
-        let mut results:Vec<PingResult> = vec![];
+        let mut results: Vec<PingResult> = vec![];
         for url in self.urls.iter() {
-            let response = reqwest::blocking::get(url);
-            let status_code = match response {
-                Ok(response) =>  response.status().as_u16(),
-                Err(_) => 404
-            };
-            results.push(PingResult{url: url.to_string(),  status_code});
+            let request_start_time = Instant::now();
+            let status_code: u16 = self.get_url_status_code(&url);
+            let request_end_time = Instant::now();
+
+            let request_duration = request_end_time - request_start_time;
+            results.push(PingResult {
+                url: url.to_string(),
+                status_code,
+                duration_in_nano_seconds: request_duration.as_nanos(),
+            });
         }
         results
+    }
 
+    fn get_url_status_code(&self, url: &str) -> u16 {
+        let response = reqwest::blocking::get(url);
+        match response {
+            Ok(response) => response.status().as_u16(),
+            Err(_) => 404,
+        }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -57,10 +69,19 @@ mod tests {
         let results = pinger.ping_urls();
         let expected_status_codes = [200, 404, 404];
 
-        for  (actual_result, expected_code) in zip(results, expected_status_codes) {
+        for (actual_result, expected_code) in zip(results, expected_status_codes) {
             assert_eq!(actual_result.status_code, expected_code)
         }
     }
 
+    #[test]
+    fn ping_urls_returns_valid_request_duration() {
+        let urls = "https://example.com,https://google.com/hype,htx:example.com".to_string();
+        let pinger = UrlPinger::new(urls);
 
+        let results = pinger.ping_urls();
+        for result in results.iter() {
+            assert!(result.duration_in_nano_seconds > 0);
+        }
+    }
 }
