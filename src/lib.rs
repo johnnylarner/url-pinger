@@ -1,4 +1,5 @@
 use reqwest::{self};
+use std::sync::Arc;
 use std::thread;
 use std::time::Instant;
 
@@ -101,13 +102,13 @@ impl UrlPinger {
     }
 
     fn ping_urls_multithread(&self) -> Vec<PingResult> {
+        let client = Arc::new(reqwest::blocking::Client::new());
         let mut threads = Vec::new();
-        let mut results: Vec<PingResult> = Vec::new();
 
         for url in self.urls.iter() {
+            let client = Arc::clone(&client);
             let url_clone = url.clone();
-            threads.push(thread::spawn(|| {
-                let client = reqwest::blocking::Client::new();
+            threads.push(thread::spawn(move || {
                 let start = Instant::now();
                 let status_code: u16 = Self::get_url_status_code(&client, &url_clone);
                 let end = start.elapsed();
@@ -118,6 +119,8 @@ impl UrlPinger {
                 }
             }))
         }
+
+        let mut results: Vec<PingResult> = Vec::new();
         for thread in threads {
             results.push(thread.join().unwrap())
         }
