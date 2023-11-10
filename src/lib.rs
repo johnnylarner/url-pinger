@@ -41,9 +41,10 @@ impl UrlPinger {
 
     fn ping_urls_sync(&self) -> Vec<PingResult> {
         let mut results: Vec<PingResult> = Vec::new();
+        let client = reqwest::blocking::Client::new();
         for url in self.urls.iter() {
             let start = Instant::now();
-            let status_code: u16 = self.get_url_status_code(&url);
+            let status_code: u16 = Self::get_url_status_code(&client, &url);
             let end = start.elapsed();
 
             results.push(PingResult {
@@ -55,8 +56,8 @@ impl UrlPinger {
         results
     }
 
-    fn get_url_status_code(&self, url: &str) -> u16 {
-        let response = reqwest::blocking::get(url);
+    fn get_url_status_code(client: &reqwest::blocking::Client, url: &str) -> u16 {
+        let response = client.get(url).send();
         match response {
             Ok(response) => response.status().as_u16(),
             Err(_) => 404,
@@ -76,7 +77,7 @@ impl UrlPinger {
                     let client = &client;
                     async move {
                         let start = Instant::now();
-                        let status_code = self.get_url_status_code_async(client, &url_clone).await;
+                        let status_code = Self::get_url_status_code_async(client, &url_clone).await;
                         let end = start.elapsed();
             
                         PingResult {
@@ -90,7 +91,7 @@ impl UrlPinger {
                 futures::future::join_all(futures).await
             })
     }
-    async fn get_url_status_code_async(&self, client: &reqwest::Client, url: &str) -> u16 {
+    async fn get_url_status_code_async(client: &reqwest::Client, url: &str) -> u16 {
         let response = client.get(url).send().await;
         match response {
             Ok(response) => response.status().as_u16(),
