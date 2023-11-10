@@ -23,6 +23,6 @@ fn main() {
 
     let ping_results = pinger.ping_urls();
     for res in ping_results.iter() {
-        println!("{:?}", res)
+        println!("{}", res.to_string())
     }
 }

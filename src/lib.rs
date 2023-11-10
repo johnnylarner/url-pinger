@@ -1,12 +1,18 @@
 use reqwest::{self};
 use std::sync::Arc;
 use std::thread;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub enum RuntimeType {
     SYNC,
     ASYNC,
     MULTITHREADED,
+}
+#[derive(Debug)]
+pub struct PingResult {
+    pub url: String,
+    pub status_code: u16,
+    pub duration_in_nano_seconds: u128,
 }
 
 pub struct UrlPinger {
@@ -14,11 +20,17 @@ pub struct UrlPinger {
     pub runtime: RuntimeType,
 }
 
-#[derive(Debug)]
-pub struct PingResult {
-    pub url: String,
-    pub status_code: u16,
-    pub duration_in_nano_seconds: u128,
+impl PingResult {
+    pub fn to_string(&self) -> String {
+        let duration_in_seconds = Duration::from_nanos(self.duration_in_nano_seconds as u64);
+        let result_string = format!(
+            "🫘 Ping to `{}` took {:.4} seconds.💊 Ping received response: {}",
+            &self.url,
+            duration_in_seconds.as_secs_f32(),
+            &self.status_code
+        );
+        result_string
+    }
 }
 
 impl UrlPinger {
@@ -153,6 +165,19 @@ mod tests {
     fn thread_pinger() -> UrlPinger {
         let urls = "https://example.com,htx:example.com,https://google.com/hype".to_string();
         UrlPinger::from_comma_seperated_string(&urls, "multi")
+    }
+
+    #[test]
+    fn ping_result_to_string() {
+        let ping = PingResult {
+            url: "a".to_string(),
+            status_code: 200,
+            duration_in_nano_seconds: Duration::from_secs(1).as_nanos(),
+        };
+        let actual_string = ping.to_string();
+        let expected_string =
+            "Ping to `a` took 1.0000 seconds. Ping received response: 200".to_string();
+        assert_eq!(actual_string, expected_string)
     }
 
     #[test]
