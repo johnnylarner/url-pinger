@@ -13,7 +13,7 @@ struct UrlParser {
 fn main() {
     let parser = UrlParser::parse();
 
-    let pinger = UrlPinger::new(parser.urls);
+    let pinger = UrlPinger::from_comma_seperated_string(&parser.urls);
 
     let ping_results = pinger.ping_urls();
     for res in ping_results.iter() {

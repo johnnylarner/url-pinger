@@ -13,14 +13,16 @@ pub struct PingResult {
 }
 
 impl UrlPinger {
-    pub fn new(urls: String) -> UrlPinger {
-        let mut url_vec: Vec<String> = Vec::new();
-        for url in urls.split(",") {
-            url_vec.push(url.to_string());
-        }
-
-        UrlPinger { urls: url_vec }
+    pub fn new(urls: Vec<String>) -> UrlPinger {
+        UrlPinger { urls }
     }
+    pub fn from_comma_seperated_string(urls: &String) -> UrlPinger {
+        let mut urls_as_vec: Vec<String> = Vec::new();
+        for url in urls.split(",") {
+            urls_as_vec.push(url.to_string());
+        }
+        UrlPinger::new(urls_as_vec)
+    }   
 
     pub fn ping_urls(&self) -> Vec<PingResult> {
         let mut results: Vec<PingResult> = Vec::new();
@@ -54,16 +56,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn new_returns_url_pinger() {
+    fn from_comma_seperated_string_returns_url_pinger() {
         let urls = "a,b".to_string();
-        let pinger = UrlPinger::new(urls);
+        let pinger = UrlPinger::from_comma_seperated_string(&urls);
         assert_eq!(vec!["a", "b"], *pinger.urls);
     }
 
     #[test]
     fn ping_urls_handles_good_and_bad_requests() {
         let urls = "https://example.com,htx:example.com,https://google.com/hype".to_string();
-        let pinger = UrlPinger::new(urls);
+        let pinger = UrlPinger::from_comma_seperated_string(&urls);
 
         let results = pinger.ping_urls();
         let expected_status_codes = [200, 404, 404];
@@ -75,8 +77,8 @@ mod tests {
 
     #[test]
     fn ping_urls_returns_valid_request_duration() {
-        let urls = "https://example.com,https://google.com/hype,htx:example.com".to_string();
-        let pinger = UrlPinger::new(urls);
+        let urls = "https://example.com,htx:example.com,https://google.com/hype".to_string();
+        let pinger = UrlPinger::from_comma_seperated_string(&urls);
 
         let results = pinger.ping_urls();
         for result in results.iter() {
