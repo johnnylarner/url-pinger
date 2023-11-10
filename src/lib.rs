@@ -22,7 +22,13 @@ pub struct PingResult {
 }
 
 impl UrlPinger {
-    pub fn new(urls: Vec<String>, runtime: RuntimeType) -> UrlPinger {
+    pub fn new(urls: Vec<String>, runtime: &str) -> UrlPinger {
+        let runtime = match runtime {
+            "sync" => RuntimeType::SYNC,
+            "async" => RuntimeType::ASYNC,
+            "multi" => RuntimeType::MULTITHREADED,
+            _ => panic!("Mode {runtime} not in ('sync', 'async', 'multi'"),
+        };
         UrlPinger { urls, runtime }
     }
     pub fn from_comma_seperated_string(urls: &str, runtime: &str) -> UrlPinger {
@@ -30,12 +36,6 @@ impl UrlPinger {
         for url in urls.split(",") {
             urls_as_vec.push(url.to_string());
         }
-        let runtime = match runtime {
-            "sync" => RuntimeType::SYNC,
-            "async" => RuntimeType::ASYNC,
-            "multi" => RuntimeType::MULTITHREADED,
-            _ => panic!("Mode {runtime} not in ('sync', 'async', 'multi'"),
-        };
         UrlPinger::new(urls_as_vec, runtime)
     }
 
