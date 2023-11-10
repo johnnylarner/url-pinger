@@ -1,5 +1,5 @@
 use clap::Parser;
-use web_pinger::UrlPinger;
+use web_pinger::{RuntimeType, UrlPinger};
 
 /// A simple URL pinger that gives you response times and status codes
 #[derive(Parser, Debug)]
@@ -13,7 +13,7 @@ struct UrlParser {
 fn main() {
     let parser = UrlParser::parse();
 
-    let pinger = UrlPinger::from_comma_seperated_string(&parser.urls);
+    let pinger = UrlPinger::from_comma_seperated_string(&parser.urls, RuntimeType::SYNC);
 
     let ping_results = pinger.ping_urls();
     for res in ping_results.iter() {
