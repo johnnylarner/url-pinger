@@ -6,7 +6,7 @@ use std::time::Instant;
 pub enum RuntimeType {
     SYNC,
     ASYNC,
-    MULTITHREAD,
+    MULTITHREADED,
 }
 
 pub struct UrlPinger {
@@ -25,11 +25,17 @@ impl UrlPinger {
     pub fn new(urls: Vec<String>, runtime: RuntimeType) -> UrlPinger {
         UrlPinger { urls, runtime }
     }
-    pub fn from_comma_seperated_string(urls: &str, runtime: RuntimeType) -> UrlPinger {
+    pub fn from_comma_seperated_string(urls: &str, runtime: &str) -> UrlPinger {
         let mut urls_as_vec: Vec<String> = Vec::new();
         for url in urls.split(",") {
             urls_as_vec.push(url.to_string());
         }
+        let runtime = match runtime {
+            "sync" => RuntimeType::SYNC,
+            "async" => RuntimeType::ASYNC,
+            "multi" => RuntimeType::MULTITHREADED,
+            _ => panic!("Mode {runtime} not in ('sync', 'async', 'multi'"),
+        };
         UrlPinger::new(urls_as_vec, runtime)
     }
 
@@ -37,7 +43,7 @@ impl UrlPinger {
         match self.runtime {
             RuntimeType::SYNC => self.ping_urls_sync(),
             RuntimeType::ASYNC => self.ping_urls_async(),
-            RuntimeType::MULTITHREAD => self.ping_urls_multithread(),
+            RuntimeType::MULTITHREADED => self.ping_urls_multithread(),
         }
     }
 
@@ -136,23 +142,23 @@ mod tests {
 
     fn sync_pinger() -> UrlPinger {
         let urls = "https://example.com,htx:example.com,https://google.com/hype".to_string();
-        UrlPinger::from_comma_seperated_string(&urls, RuntimeType::SYNC)
+        UrlPinger::from_comma_seperated_string(&urls, "sync")
     }
 
     fn async_pinger() -> UrlPinger {
         let urls = "https://example.com,htx:example.com,https://google.com/hype".to_string();
-        UrlPinger::from_comma_seperated_string(&urls, RuntimeType::ASYNC)
+        UrlPinger::from_comma_seperated_string(&urls, "async")
     }
 
     fn thread_pinger() -> UrlPinger {
         let urls = "https://example.com,htx:example.com,https://google.com/hype".to_string();
-        UrlPinger::from_comma_seperated_string(&urls, RuntimeType::MULTITHREAD)
+        UrlPinger::from_comma_seperated_string(&urls, "multi")
     }
 
     #[test]
     fn from_comma_seperated_string_returns_url_pinger() {
         let urls = "a,b".to_string();
-        let pinger = UrlPinger::from_comma_seperated_string(&urls, RuntimeType::SYNC);
+        let pinger = UrlPinger::from_comma_seperated_string(&urls, "sync");
         assert_eq!(vec!["a", "b"], *pinger.urls);
     }
 
@@ -185,10 +191,9 @@ mod tests {
     fn sync_pinger_is_slower_than_async_and_threaded() {
         let urls = "http://example1.com,http://example2.com,http://example3.com,http://example4.com,http://example5.com,http://example6.com,http://example7.com,http://example8.com,http://example9.com,http://example10.com,http://example11.com,http://example12.com,http://example13.com,http://example14.com,http://example15.com,http://example16.com,http://example17.com,http://example18.com,http://example19.com,http://example20.com,http://example21.com,http://example22.com,http://example23.com,http://example24.com,http://example25.com,http://example26.com,http://example27.com,http://example28.com,http://example29.com,http://example30.com,http://example31.com,http://example32.com,http://example33.com,http://example34.com,http://example35.com,http://example36.com,http://example37.com,http://example38.com,http://example39.com,http://example40.com";
 
-        let sync_pinger = UrlPinger::from_comma_seperated_string(urls, RuntimeType::SYNC);
-        let async_pinger = UrlPinger::from_comma_seperated_string(urls, RuntimeType::ASYNC);
-        let threaded_pinger =
-            UrlPinger::from_comma_seperated_string(urls, RuntimeType::MULTITHREAD);
+        let sync_pinger = UrlPinger::from_comma_seperated_string(urls, "sync");
+        let async_pinger = UrlPinger::from_comma_seperated_string(urls, "async");
+        let threaded_pinger = UrlPinger::from_comma_seperated_string(urls, "multi");
 
         let sync_start = Instant::now();
         sync_pinger.ping_urls();
